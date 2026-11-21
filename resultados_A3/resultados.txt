@@ -1,0 +1,87 @@
+======================================================================
+RESULTADOS PRELIMINARES - PROJETO APLICADO II (A3)
+======================================================================
+
+1. ORIGEM E VOLUME DOS DADOS
+Arquivo analisado: reviews_com_genero.csv (base de reviews da Steam enriquecida com genero)
+Total de registros na base completa: 6.417.106
+Colunas (6): app_id, app_name, review_text, review_score, review_votes, genres
+
+Valores nulos por coluna (base completa):
+  app_id: 0 (0,00%)
+  app_name: 183.234 (2,86%)
+  review_text: 7.305 (0,11%)
+  review_score: 0 (0,00%)
+  review_votes: 0 (0,00%)
+  genres: 558.268 (8,70%)
+
+Valores encontrados em review_score (base completa):
+  -1: 1.156.686 (18,03%)
+  1: 5.260.420 (81,97%)
+Valores encontrados em review_votes (base completa):
+  0: 5.472.222 (85,28%)
+  1: 944.884 (14,72%)
+(Use estes valores para conferir o dicionario de dados do relatorio.)
+
+2. TRATAMENTO DA BASE
+Amostra aleatoria usada na modelagem: 320.855 reviews (5% da base)
+  - removidos por texto/rotulo nulo: 372
+  - removidos por texto vazio apos limpeza: 1.734
+  - removidos por duplicidade (mesmo texto e mesmo rotulo): 66.415
+  - base final tratada: 252.334 reviews
+Etapas aplicadas: minusculas; remocao de links, pontuacao e caracteres especiais; stopwords em ingles (negacoes preservadas); lematizacao (WordNet); TF-IDF (unigramas e bigramas, ate 50.000 termos, min_df=5).
+
+3. ANALISE EXPLORATORIA (amostra tratada)
+Reviews que recomendam: 82,05% | nao recomendam: 17,95%
+Baseline (prever sempre a classe majoritaria): acuracia de 82,05%
+  -> qualquer modelo precisa superar esse valor; por isso o F1 macro e o recall da classe negativa tambem sao reportados.
+Tamanho das reviews apos tratamento (palavras): media 33,4, mediana 15, percentil 95 = 124, maximo 910
+Jogos distintos na amostra: 7.018
+Reviews com genero identificado na amostra tratada: 228.941 (90,7%)
+Obs.: um jogo pode ter varios generos; a review conta em TODOS os generos do jogo (por isso a soma por genero ultrapassa o total de reviews).
+
+4. PARTICAO DOS DADOS
+Treino: 201.867 reviews (80%) | Teste: 50.467 reviews (20%), estratificado pela classe, seed fixa.
+Vocabulario TF-IDF (ajustado somente no treino): 50.000 termos
+
+5. VALIDACAO CRUZADA (K-Fold, k=5; TF-IDF refeito em cada fold)
+Regressão Logística (amostra de 60.000 reviews): acuracia 0,875 +/- 0,003 | precisao 0,952 | recall 0,893 | F1 0,922 +/- 0,002 | F1 macro 0,809
+Naive Bayes (Multinomial) (amostra de 60.000 reviews): acuracia 0,865 +/- 0,002 | precisao 0,865 | recall 0,990 | F1 0,923 +/- 0,001 | F1 macro 0,683
+Random Forest (amostra de 20.000 reviews): acuracia 0,869 +/- 0,006 | precisao 0,905 | recall 0,938 | F1 0,921 +/- 0,003 | F1 macro 0,764
+
+6. AVALIACAO NO CONJUNTO DE TESTE
+Baseline de acuracia (classe majoritaria): 0,821
+Regressão Logística: acuracia 0,879 | precisao 0,961 | recall (positiva) 0,889 | recall (negativa) 0,836 | F1 0,923 | F1 macro 0,818 | ROC-AUC 0,939 | treino 3,7s
+   matriz de confusao [real nao: prev nao / prev sim ; real sim: prev nao / prev sim] = [7.575 / 1.483 ; 4.614 / 36.795]
+Naive Bayes (Multinomial): acuracia 0,886 | precisao 0,895 | recall (positiva) 0,976 | recall (negativa) 0,477 | F1 0,934 | F1 macro 0,767 | ROC-AUC 0,924 | treino 0,0s
+   matriz de confusao [real nao: prev nao / prev sim ; real sim: prev nao / prev sim] = [4.319 / 4.739 ; 1.012 / 40.397]
+Random Forest: acuracia 0,876 | precisao 0,924 | recall (positiva) 0,924 | recall (negativa) 0,654 | F1 0,924 | F1 macro 0,789 | ROC-AUC 0,904 | treino 12,9s
+   matriz de confusao [real nao: prev nao / prev sim ; real sim: prev nao / prev sim] = [5.927 / 3.131 ; 3.151 / 38.258]
+Melhor modelo por F1 macro: Regressão Logística
+Criterio de escolha: F1 macro (media do F1 das duas classes). O F1 da classe positiva fica alto ate para modelos que erram muito a classe negativa, por causa do desbalanceamento.
+Meta da Etapa 2 (F1 > 0,75, medida pelo F1 macro): atingida por 3 de 3 modelos (Regressão Logística, Naive Bayes (Multinomial), Random Forest).
+(Random Forest treinada com subamostra de 80.000 reviews do treino, por custo computacional.)
+Obs.: Regressao Logistica e Random Forest usam class_weight balanceado; Naive Bayes usa as probabilidades a priori da propria base.
+
+7. ACEITACAO E DESEMPENHO POR GENERO
+Media geral de aprovacao (reviews com genero): 82,7%
+Generos com ao menos 1.000 reviews na amostra (% que recomenda | acuracia do melhor modelo no teste):
+  Indie: 85,8% | 0,891 | 101.011 reviews
+  RPG: 82,8% | 0,887 | 59.198 reviews
+  Adventure: 82,8% | 0,887 | 76.812 reviews
+  Action: 82,6% | 0,877 | 143.301 reviews
+  Racing: 82,5% | 0,888 | 6.066 reviews
+  Casual: 82,4% | 0,869 | 24.238 reviews
+  Strategy: 81,9% | 0,881 | 45.845 reviews
+  Simulation: 81,3% | 0,882 | 33.609 reviews
+  Sports: 80,9% | 0,891 | 6.025 reviews
+  Sexual Content: 80,4% | 0,856 | 1.207 reviews
+  Nudity: 78,0% | 0,866 | 1.379 reviews
+  Free to Play: 77,4% | 0,840 | 30.945 reviews
+  Massively Multiplayer: 69,4% | 0,842 | 13.332 reviews
+
+8. TERMOS MAIS ASSOCIADOS A CADA CLASSE (Regressao Logistica)
+Recomenda: awesome, amaze, best, 10 10, not disappoint, great, complaint, not regret, addictive, highly recommend, not bad, addict, not bore, excellent, fun
+Nao recomenda: not recommend, not worth, bore, refund, not fun, want like, worst, unplayable, terrible, poorly, cannot recommend, dull, not, awful, ruin
+
+Tempo total de execucao: 2,4 minutos
